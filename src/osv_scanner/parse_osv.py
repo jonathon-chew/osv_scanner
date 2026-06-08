@@ -12,6 +12,10 @@ class Vulnerability:
 
 
 def _extract_cvss(severity_list):
+    """
+    CVSS could be in different styles, look for the type to get the right score
+    CVSS 4 > CVSS 3 > CVSS 2
+    """
     priority = ["CVSS_V4", "CVSS_V3", "CVSS_V2"]
 
     for p in priority:
@@ -23,6 +27,9 @@ def _extract_cvss(severity_list):
 
 
 def parse_osv(response: dict) -> list[Vulnerability]:
+    """
+    Parse the OSV response for the relevent information, and print to the screen
+    """
     vulns = []
 
     for item in response.get("vulns", []):

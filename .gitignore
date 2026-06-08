@@ -2,5 +2,7 @@
 Archive
 docs
 __pycache__
+osv_scanner_venv
+tests/fixtures/
 
 # Files
