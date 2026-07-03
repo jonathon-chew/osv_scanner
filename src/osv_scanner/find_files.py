@@ -2,6 +2,7 @@ from collections import defaultdict
 import os
 import json
 import re
+import tomllib
 
 import make_requests
 
@@ -10,7 +11,7 @@ versions: dict[str, str] = defaultdict()
 VERBOSE = False
 
 
-def _parse_file(file_name: str, input: str, DEBUG: bool = False):
+def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
     """
     Parse all the types of files that can contain packages in the different ways it can recorded
     """
@@ -40,6 +41,8 @@ def _parse_file(file_name: str, input: str, DEBUG: bool = False):
                         version=package[1],
                         package_name=package[0],
                         ecosystem="PyPI",
+                        file_name=file_name,
+                        root_folder=root,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG,
                     )
@@ -52,6 +55,8 @@ def _parse_file(file_name: str, input: str, DEBUG: bool = False):
                         version=each_package[1],
                         package_name=each_package[0],
                         ecosystem="PyPI",
+                        file_name=file_name,
+                        root_folder=root,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG
                     )
@@ -70,11 +75,11 @@ def _parse_file(file_name: str, input: str, DEBUG: bool = False):
                         version=dep_version,
                         package_name=project_name,
                         ecosystem="PyPI",
+                        file_name=file_name,
+                        root_folder=root,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG
                     )
-            
-
 
         case "pyvenv.cfg":
             pass
@@ -97,6 +102,8 @@ def _parse_file(file_name: str, input: str, DEBUG: bool = False):
                         version=version,
                         package_name=package_name,
                         ecosystem="PyPI",
+                        file_name=file_name,
+                        root_folder=root,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG,
                     )
@@ -107,6 +114,8 @@ def _parse_file(file_name: str, input: str, DEBUG: bool = False):
                             version=each_pacakge.get("version"),
                             package_name=each_pacakge.get("name"),
                             ecosystem="PyPI",
+                            file_name=file_name,
+                            root_folder=root,
                             VERBOSE=VERBOSE,
                             DEBUG=DEBUG,
                         )
@@ -129,6 +138,8 @@ def _parse_file(file_name: str, input: str, DEBUG: bool = False):
                         version=version,
                         package_name=package_name,
                         ecosystem="PyPI",
+                        file_name=file_name,
+                        root_folder=root,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG,
                     )
@@ -139,6 +150,8 @@ def _parse_file(file_name: str, input: str, DEBUG: bool = False):
                             version=each_pacakge.get("version"),
                             package_name=each_pacakge.get("name"),
                             ecosystem="PyPI",
+                            file_name=file_name,
+                            root_folder=root,
                             VERBOSE=VERBOSE,
                             DEBUG=DEBUG,
                         )
@@ -186,4 +199,4 @@ def find(location: str, v: bool, DEBUG: bool = False):
             if VERBOSE:
                 print(f"Found {file} in {root}")
 
-            _parse_file(file, contents, DEBUG=DEBUG)
+            _parse_file(file, contents, root, DEBUG=DEBUG)
