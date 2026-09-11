@@ -5,6 +5,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "osv_scanne
 
 import find_files # type: ignorec
 
-# find_files.find("/Users/hunteradder626/Documents/Scripts/Python/Draft/osv_scanner/tests/fixtures", v=True, DEBUG=True)
+find_files.find("$HOME/Projects/Public/osv_scanner/tests/fixtures", v=True, DEBUG=True)
 
-find_files.find("/Users/hunteradder626/Documents/Scripts/Git/Third_Party", v=True, DEBUG=True)
+# find_files.find("$HOME/Projects/Git/Third_Party", v=True, DEBUG=True)
