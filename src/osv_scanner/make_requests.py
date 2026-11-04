@@ -3,12 +3,13 @@ import json
 import os
 import random
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Optional
 
 import requests
 
 import log
+
 
 @dataclass
 class Vulnerability:
@@ -66,13 +67,23 @@ def _parse_osv(response: dict) -> list[Vulnerability]:
     return vulns
 
 
-
-def make_request(version:str, package_name:str, ecosystem: str, file_name: str, root_folder: str, VERBOSE: bool, DEBUG: bool = False):
+def make_request(
+    version: str,
+    package_name: str,
+    ecosystem: str,
+    file_name: str,
+    root_folder: str,
+    VERBOSE: bool,
+    DEBUG: bool = False,
+):
     """
     Make a request to the OSV database for the package, version and eco system
     """
     # Load # {"version": "2.4.1", "package": {"name": "jinja2", "ecosystem": "PyPI"}}
-    payload = {"version": f"{version}", "package": {"name": f"{package_name}", "ecosystem": f"{ecosystem}"}}
+    payload = {
+        "version": f"{version}",
+        "package": {"name": f"{package_name}", "ecosystem": f"{ecosystem}"},
+    }
 
     if DEBUG:
         print(payload)
@@ -81,27 +92,63 @@ def make_request(version:str, package_name:str, ecosystem: str, file_name: str, 
     # Being a good citizen
     time.sleep(random.randrange(0, 2))
 
-    r = requests.post(url="https://api.osv.dev/v1/query", data=json.dumps(payload))
+    docs_folder = f"{os.path.sep}".join(
+        os.path.split(os.path.dirname(os.path.realpath(__file__)))[:-2]
+    )
+    record_of_request_file = (
+        f"./{docs_folder}/docs/{package_name}_response_{version}.json"
+    )
+
+    r = "" # just to stop pylance from complaining
+    status = "" # just to stop pylance from complaining
+
+    if not os.path.exists(record_of_request_file):
+        req = requests.post(
+            url="https://api.osv.dev/v1/query", data=json.dumps(payload)
+        )
+        req.raise_for_status()
+        r = req.json()
+        status = req.status_code
+
+        with open(record_of_request_file, "w") as w:
+            w.write(json.dumps(r))
+    else:
+        try:
+            with open(record_of_request_file, "r") as rr:
+                r = json.loads(rr.read())
+                status = "file"
+        except:
+            os.remove(record_of_request_file)
+            make_request(
+                version=version,
+                package_name=package_name,
+                ecosystem=ecosystem,
+                file_name=file_name,
+                root_folder=root_folder,
+                VERBOSE=VERBOSE,
+                DEBUG=DEBUG,
+            )
 
     full_file_path = os.path.join(root_folder, file_name)
 
-    log.log(f"TIME: {datetime.now(timezone.utc)} | REQUEST: {json.dumps(payload)} | STATUS: {r.status_code} | FILE: {full_file_path}", full_file_path)
+    log.log(
+        f"TIME: {datetime.now(timezone.utc)} | REQUEST: {json.dumps(payload)} | STATUS: {status} | FILE: {full_file_path}",
+        full_file_path,
+    )
 
-    r.raise_for_status()
+    if isinstance(r, dict):
+        if len(r.keys()) == 0:
+            if VERBOSE:
+                print(f"No issues with {package_name} on version {version}")
+            return
+        else:
+            print(f"Issue with {package_name} on version {version}")
 
-    with open(f"./docs/{package_name}_response_{version}.json", "w") as w:
-        w.write(json.dumps(r.json()))
+        for vuln in _parse_osv(r):
+            print(f"{vuln.id}")
+            print(f"  CVE: {vuln.cve}")
+            print(f"  Score: {vuln.cvss}")
+            print(f"  Fixed in: {vuln.fixed_version}")
+            print()
 
-    if len(r.json().keys()) == 0:
-        if VERBOSE:
-            print(f"No issues with {package_name} on version {version}")
-        return
-    else:
-        print(f"Issue with {package_name} on version {version}")
-
-    for vuln in _parse_osv(r.json()):
-        print(f"{vuln.id}")
-        print(f"  CVE: {vuln.cve}")
-        print(f"  Score: {vuln.cvss}")
-        print(f"  Fixed in: {vuln.fixed_version}")
-        print()
+            log.log(json.dumps(asdict(vuln)), full_file_path)
