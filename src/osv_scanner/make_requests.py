@@ -102,6 +102,8 @@ def make_request(
     r = "" # just to stop pylance from complaining
     status = "" # just to stop pylance from complaining
 
+    # (#1) TODO: Add a command for no cache so it always requests fresh
+    # (#2) TODO: Add a command for how long ago the file could be cached, and a default of say a month
     if not os.path.exists(record_of_request_file):
         req = requests.post(
             url="https://api.osv.dev/v1/query", data=json.dumps(payload)
@@ -152,3 +154,5 @@ def make_request(
             print()
 
             log.log(json.dumps(asdict(vuln)), full_file_path)
+    else:
+        print(f"[ERROR]: could not parse information, {r}")
