@@ -9,7 +9,8 @@ The goal was to practise building a practical developer tool around a real exter
 - Recursively scans from a user-provided base directory.
 - Detects Python dependency files including `requirements.txt`.
 - Supports both traditional pinned requirement lines and JSON-style package lists.
-- Queries the OSV `/v1/query` API with package name, version, and ecosystem.
+- Queries the OSV `/v1/query` API with package name, version, and ecosystem when no recent local result is available.
+- Reuses recent response files in the scanned project's `docs` folder when available, reducing unnecessary repeat requests.
 - Writes raw API responses to `docs/<package>_response.json` for inspection.
 - Logs request payloads, timestamps, and HTTP status codes to `docs/log.log`.
 - Parses OSV responses into a small `Vulnerability` dataclass containing the OSV id, CVE alias, parsed CVSS value, and fixed version when available.
@@ -100,7 +101,7 @@ OSV-2024-123
   Fixed in: 1.0.1
 ```
 
-The scanner also saves raw API responses for later review:
+The scanner saves raw API responses for later review. On a later run, recent responses in the target project's `docs` folder can be reused before making another OSV request:
 
 ```text
 docs/Flask_response.json
