@@ -1,9 +1,9 @@
+from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 import json
 import os
 import random
 import time
-from dataclasses import dataclass, asdict
 from typing import Optional
 
 import requests
@@ -74,6 +74,8 @@ def make_request(
     file_name: str,
     root_folder: str,
     VERBOSE: bool,
+    ignore_cache: bool = False,
+    ignore_cache_n_old: int = -1,
     DEBUG: bool = False,
 ):
     """
@@ -89,6 +91,9 @@ def make_request(
         print(payload)
         return
 
+    if ignore_cache_n_old != -1:
+        ignore_if_older_than = time.time() - (ignore_cache_n_old * 60 * 60 * 24)
+
     # Being a good citizen
     time.sleep(random.randrange(0, 2))
 
@@ -99,12 +104,12 @@ def make_request(
         f"./{docs_folder}/docs/{package_name}_response_{version}.json"
     )
 
-    r = "" # just to stop pylance from complaining
-    status = "" # just to stop pylance from complaining
+    r = ""  # just to stop pylance from complaining
+    status = ""  # just to stop pylance from complaining
 
     # (#1) TODO: Add a command for no cache so it always requests fresh
     # (#2) TODO: Add a command for how long ago the file could be cached, and a default of say a month
-    if not os.path.exists(record_of_request_file):
+    if not os.path.exists(record_of_request_file) or ignore_cache:
         req = requests.post(
             url="https://api.osv.dev/v1/query", data=json.dumps(payload)
         )
@@ -116,17 +121,26 @@ def make_request(
             w.write(json.dumps(r))
     else:
         try:
+
+            if ignore_cache_n_old != -1:
+                # If the file if OLDER than the passed in parameter ignore it
+                if os.path.getctime(record_of_request_file) < ignore_if_older_than:  # type: ignore
+                    raise Exception("File is too old")
+
             with open(record_of_request_file, "r") as rr:
                 r = json.loads(rr.read())
                 status = "file"
         except:
-            os.remove(record_of_request_file)
+            if ignore_cache_n_old != -1:
+                os.remove(record_of_request_file)
             make_request(
                 version=version,
                 package_name=package_name,
                 ecosystem=ecosystem,
                 file_name=file_name,
                 root_folder=root_folder,
+                ignore_cache=ignore_cache,
+                ignore_cache_n_old=ignore_cache_n_old,
                 VERBOSE=VERBOSE,
                 DEBUG=DEBUG,
             )
@@ -140,8 +154,7 @@ def make_request(
 
     if isinstance(r, dict):
         if len(r.keys()) == 0:
-            if VERBOSE:
-                print(f"No issues with {package_name} on version {version}")
+            log.print_log(VERBOSE, f"No issues with {package_name} on version {version}")
             return
         else:
             print(f"Issue with {package_name} on version {version}")

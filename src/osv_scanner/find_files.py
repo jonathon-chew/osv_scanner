@@ -1,3 +1,4 @@
+import argparse
 from collections import defaultdict
 import os
 import json
@@ -5,13 +6,16 @@ import re
 import tomllib
 
 import make_requests
+import log
 
 versions: dict[str, str] = defaultdict()
 
 VERBOSE = False
 
 
-def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
+def _parse_file(
+    file_name: str, input: str, root: str, args: argparse.Namespace, DEBUG: bool = False
+):
     """
     Parse all the types of files that can contain packages in the different ways it can recorded
     """
@@ -43,10 +47,12 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
                         ecosystem="PyPI",
                         file_name=file_name,
                         root_folder=root,
+                        ignore_cache=args.ignore_cache,
+                        ignore_cache_n_old=args.ignore_n_old,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG,
                     )
-            
+
             if package_and_version:
                 print("found package and version")
                 for each_package in package_and_version:
@@ -57,15 +63,17 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
                         ecosystem="PyPI",
                         file_name=file_name,
                         root_folder=root,
+                        ignore_cache=args.ignore_cache,
+                        ignore_cache_n_old=args.ignore_n_old,
                         VERBOSE=VERBOSE,
-                        DEBUG=DEBUG
+                        DEBUG=DEBUG,
                     )
 
-            for details in project: 
+            for details in project:
                 if not "name" in details or not "version" in details:
                     continue
-                project_name = re.findall("name = \"(.*)\"", details)
-                dep_version = re.findall("version = \"(.*)\"", details)
+                project_name = re.findall('name = "(.*)"', details)
+                dep_version = re.findall('version = "(.*)"', details)
 
                 project_name = project_name[0] if len(project_name) == 1 else "ERROR"
                 dep_version = dep_version[0] if len(dep_version) == 1 else "ERROR"
@@ -77,8 +85,10 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
                         ecosystem="PyPI",
                         file_name=file_name,
                         root_folder=root,
+                        ignore_cache=args.ignore_cache,
+                        ignore_cache_n_old=args.ignore_n_old,
                         VERBOSE=VERBOSE,
-                        DEBUG=DEBUG
+                        DEBUG=DEBUG,
                     )
 
         case "pyvenv.cfg":
@@ -92,8 +102,7 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
 
                     if versions.get(remember_package, None) == version:
                         # Already checked
-                        if VERBOSE:
-                            print("Already checked: ", remember_package)
+                        log.print_log(VERBOSE, "Already checked: " + remember_package)
                         break
                     else:
                         versions[remember_package] = version
@@ -104,6 +113,8 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
                         ecosystem="PyPI",
                         file_name=file_name,
                         root_folder=root,
+                        ignore_cache=args.ignore_cache,
+                        ignore_cache_n_old=args.ignore_n_old,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG,
                     )
@@ -116,6 +127,8 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
                             ecosystem="PyPI",
                             file_name=file_name,
                             root_folder=root,
+                            ignore_cache=args.ignore_cache,
+                            ignore_cache_n_old=args.ignore_n_old,
                             VERBOSE=VERBOSE,
                             DEBUG=DEBUG,
                         )
@@ -128,8 +141,7 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
 
                     if versions.get(remember_package, None) == version:
                         # Already checked
-                        if VERBOSE:
-                            print("Already checked: ", remember_package)
+                        log.print_log(VERBOSE, "Already checked: " + remember_package)
                         break
                     else:
                         versions[remember_package] = version
@@ -140,6 +152,8 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
                         ecosystem="PyPI",
                         file_name=file_name,
                         root_folder=root,
+                        ignore_cache=args.ignore_cache,
+                        ignore_cache_n_old=args.ignore_n_old,
                         VERBOSE=VERBOSE,
                         DEBUG=DEBUG,
                     )
@@ -152,6 +166,8 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
                             ecosystem="PyPI",
                             file_name=file_name,
                             root_folder=root,
+                            ignore_cache=args.ignore_cache,
+                            ignore_cache_n_old=args.ignore_n_old,
                             VERBOSE=VERBOSE,
                             DEBUG=DEBUG,
                         )
@@ -163,7 +179,12 @@ def _parse_file(file_name: str, input: str, root: str,  DEBUG: bool = False):
     return
 
 
-def find(location: str, v: bool, DEBUG: bool = False):
+def find(
+    location: str,
+    v: bool,
+    args: argparse.Namespace,
+    DEBUG: bool = False,
+):
     """
     Traverse the location recursively for all the different files that could exist, and contain package details
     """
@@ -199,4 +220,4 @@ def find(location: str, v: bool, DEBUG: bool = False):
             if VERBOSE:
                 print(f"Found {file} in {root}")
 
-            _parse_file(file, contents, root, DEBUG=DEBUG)
+            _parse_file(file, contents, root, DEBUG=DEBUG, args=args)

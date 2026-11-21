@@ -101,7 +101,7 @@ OSV-2024-123
   Fixed in: 1.0.1
 ```
 
-The scanner saves raw API responses for later review. On a later run, recent responses in the target project's `docs` folder can be reused before making another OSV request:
+The scanner saves raw API responses for later review. On a later run, it first looks for a matching file in the scanner's local `docs/` directory, such as `requests_response_2.34.2.json`. If that file is valid, the saved response is reused and no new OSV request is made. If it is missing, the scanner queries OSV and writes the response for reuse:
 
 ```text
 docs/Flask_response.json
@@ -109,6 +109,8 @@ docs/Jinja2_response.json
 docs/requests_response.json
 docs/urllib3_response.json
 ```
+
+The cache is currently file-existence based: there is not yet a command for forcing a fresh request or configuring an expiry period. A cached response is removed and retried if it cannot be parsed as JSON.
 
 And it appends each API call to `docs/log.log`:
 

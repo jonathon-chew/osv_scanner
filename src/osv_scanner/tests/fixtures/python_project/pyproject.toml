@@ -1,0 +1,23 @@
+[project]
+name = "fake-osv-fixture-app"
+version = "0.1.0"
+description = "A fake project used as fixture data for osv_scanner tests."
+requires-python = ">=3.11"
+dependencies = [
+    "Flask==3.0.3",
+    "Jinja2==3.1.4",
+    "requests==2.32.3",
+    "urllib3==2.2.2",
+    "Werkzeug==3.0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.2.2",
+    "ruff==0.5.0",
+    "mypy==1.10.1",
+]
+
+[build-system]
+requires = ["hatchling==1.25.0"]
+build-backend = "hatchling.build"

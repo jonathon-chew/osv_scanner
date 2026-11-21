@@ -2,7 +2,7 @@ import os
 import argparse
 
 import find_files
-
+import log
 
 def main():
 
@@ -23,6 +23,18 @@ def main():
         "--verbose", help="Extra printing to show what is going on", action="store_true"
     )
 
+    flags.add_argument(
+        "--ignore-cache",
+        help="Force the scan to ignore anything in the cache, and always look up the response",
+        action="store_true",
+    )
+
+    flags.add_argument(
+        "--ignore-n-old",
+        help="Ignore anything in the cache which is under n days old",
+        type=int
+    )
+
     args = flags.parse_args()
 
     VERBOSE = args.verbose
@@ -34,7 +46,7 @@ def main():
         issuse = f"{args.base_location} appears not to exist"
         raise NotADirectoryError(issuse)
 
-    find_files.find(args.base_location, v=VERBOSE)
+    find_files.find(args.base_location, v=VERBOSE, args=args)
 
 
 if __name__ == "__main__":

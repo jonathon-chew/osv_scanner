@@ -1,3 +1,4 @@
+from typing import Any
 
 def log(info: str, file_name:str):
     """
@@ -7,3 +8,7 @@ def log(info: str, file_name:str):
         a.write(info + "\n")
     
     print(file_name + "\n" + info + "\n\n")
+
+def print_log(verbose:bool, input:Any):
+    if verbose:
+        print(input)
